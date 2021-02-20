@@ -1,0 +1,44 @@
+version: '3.1'
+services:
+  zoo1:
+    image: zookeeper
+    restart: always
+    hostname: 'zoo1'
+    ports:
+      - '2181:2181'
+      - '8080:8080'
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: server.1=zoo1:2888:3888;2181
+      ZOO_PORT: 2181
+    volumes:
+      - ./zookeeper/zoo1/data:/data
+      - ./zookeeper/zoo1/datalog:/datalog
+  
+  kafka1:
+    image: wurstmeister/kafka
+    hostname: 'kafka1'
+    ports:
+      - '9092:9092'
+      - '9094:9094'
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: kafka1
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://:9092,OUTSIDE://localhost:9094
+      KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zoo1:2181'
+      KAFKA_CREATE_TOPICS: "coinbase:1:1"
+    volumes:
+      - ./kafka/kafka1/data:/var/lib/kafka/data
+    depends_on:
+      - zoo1
+
+  producer:
+    build: ./producer
+    environment:
+      KAFKA_BROKER: kafka1:9092
+    depends_on:
+      - kafka1
