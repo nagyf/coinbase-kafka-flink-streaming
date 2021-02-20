@@ -2,7 +2,7 @@ const WebSocket = require('ws');
 const { Kafka } = require('kafkajs');
 
 const kafka = new Kafka({
-    clientId: 'coinbase',
+    clientId: 'producer',
     brokers: [process.env.KAFKA_BROKER]
 });
 
@@ -15,11 +15,12 @@ async function setup() {
 
         await new Promise(resolve => ws.once('open', resolve));
 
+        const products = process.env.PRODUCTS.split(',');
+
         ws.send(JSON.stringify({
             "type": "subscribe",
             "product_ids": [
-                "ETH-USD",
-                "ETH-EUR"
+               ...products
             ],
             "channels": [
                 "level2",
@@ -27,8 +28,7 @@ async function setup() {
                 {
                     "name": "ticker",
                     "product_ids": [
-                        "ETH-BTC",
-                        "ETH-USD"
+                        ...products
                     ]
                 }
             ]
