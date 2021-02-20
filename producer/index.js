@@ -36,7 +36,7 @@ async function setup() {
 
         ws.on('message', async msg => {
             await producer.send({
-                topic: 'coinbase',
+                topic: process.env.KAFKA_TOPIC,
                 messages: [
                     {
                         value: msg
